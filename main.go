@@ -6,6 +6,7 @@ import (
 	"github.com/rs/xid"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -80,6 +81,25 @@ func DeleteRecipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Recipe deleted"})
 }
 
+func SearchRecipeHandler(c *gin.Context) {
+	tag := c.Query("tag")
+	listOfRecipes := make([]Recipe, 0)
+
+	for i := 0; i < len(recipes); i++ {
+		found := false
+		for _, t := range recipes[i].Tags {
+			if strings.EqualFold(t, tag) {
+				found = true
+				break
+			}
+		}
+		if found {
+			listOfRecipes = append(listOfRecipes, recipes[i])
+		}
+	}
+	c.JSON(http.StatusOK, listOfRecipes)
+}
+
 func init() {
 	recipes = make([]Recipe, 0)
 	files, _ := ioutil.ReadFile("recipes.json")
@@ -94,6 +114,9 @@ func main() {
 	r.POST("/recipes", NewRecipeHandler)
 	r.GET("/recipes", ListRecipeHandler)
 	r.PUT("/recipes/:id", UpdateRecipeHandler)
+	r.DELETE("/recipes/:id", DeleteRecipeHandler)
+	r.GET("/recipes/search", SearchRecipeHandler)
+
 	err := r.Run()
 	if err != nil {
 		return
